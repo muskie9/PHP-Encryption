@@ -110,6 +110,10 @@ class EncryptedConfig {
 			unlink($infile);
 			return true;
 		}
+		else {
+			unlink($outfile);
+			return false;
+		}
 
 	}
 
