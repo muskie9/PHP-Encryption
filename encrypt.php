@@ -1,5 +1,4 @@
 <?php
-date_default_timezone_set('America/Los_Angeles');
 
 class Encryption {
 	const Cipher  = MCRYPT_RIJNDAEL_128;
@@ -28,7 +27,7 @@ class Encryption {
 class EncryptedConfig {
 	const Suffix = '.plain.php';
 	const ConfigPath = './files.php';
-	const SavePath   = './configs/';
+	const SavePath   = './files/';
 
 	private static $configs = null;
 	private static $algorithm;
@@ -74,11 +73,17 @@ class EncryptedConfig {
 	}
 	/**
 	 * Decrypt version and write to disk ($file.$version.plain.php) - used for editing files
+	 * @see self::load()
+	 * @return string Path on success
+	 * @return false  on failure
 	 */
 	static function decrypt($file, $version = null) {
 		$data = self::load($file, $version);
 		$outfile = self::SavePath . basename($file) . ".$version" . self::Suffix;
-		return (bool) file_put_contents($outfile, '<?php return ' . var_export($data, true) . ';');
+		if (file_put_contents($outfile, '<?php return ' . var_export($data, true) . ';') !== false) {
+			return $outfile;
+		}
+		return false;
 		
 	}
 	/**
