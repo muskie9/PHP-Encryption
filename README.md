@@ -1,3 +1,5 @@
+**Consider this private beta: it should be code-stable, but the API may change before being considered "public"**
+
 Versioned data encryption system
 ================================
 Store arbitrary data in versioned, encrypted files. This was built for sensitive config files (e.g., production db credentials), but should work fine with any type of data that can be serialized/unserialized/var_exported by PHP.
