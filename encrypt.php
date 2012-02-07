@@ -26,8 +26,8 @@ class Encryption {
 
 class EncryptedData {
 	const Suffix = '.plain.php';
-	const ConfigPath = './files.php';
-	const SavePath   = './files/';
+	const ConfigPath = 'files.php';
+	const SavePath   = 'files';
 
 	private static $configs = null;
 	private static $algorithm;
@@ -35,8 +35,8 @@ class EncryptedData {
 		if (self::$configs !== null) {
 			return;
 		}
-		self::$configs   = include self::ConfigPath;
-		self::$algorithm = include './algorithm.php';
+		self::$configs   = include __DIR__ . DIRECTORY_SEPARATOR . self::ConfigPath;
+		self::$algorithm = include __DIR__ . DIRECTORY_SEPARATOR . 'algorithm.php';
 	}
 	private static function buildEncryptionKey($file, $version) {
 		return call_user_func(self::$algorithm, self::$configs[$file]['versions'][$version], $file, $version);
@@ -128,11 +128,11 @@ class EncryptedData {
 	}
 
 	private static function getPathForVersion($file, $version) {
-		return self::SavePath . basename($file) . ".$version.php";
+		return __DIR__ . DIRECTORY_SEPARATOR . self::SavePath . DIRECTORY_SEPARATOR . basename($file) . ".$version.php";
 	}
 
 	public static function getPlaintextPathForVersion($file, $version) {
-		return self::SavePath . basename($file) . ".$version" . self::Suffix;
+		return __DIR__ . DIRECTORY_SEPARATOR . self::SavePath . DIRECTORY_SEPARATOR . basename($file) . ".$version" . self::Suffix;
 	}
 
 	public static function getNextVersion($file) {
