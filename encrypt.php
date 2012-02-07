@@ -24,7 +24,7 @@ class Encryption {
 	}
 }
 
-class EncryptedConfig {
+class EncryptedData {
 	const Suffix = '.plain.php';
 	const ConfigPath = './files.php';
 	const SavePath   = './files/';
@@ -58,7 +58,7 @@ class EncryptedConfig {
 			}
 			$version = self::$configs[$file]['active'];
 		}
-		$infile = self::SavePath . "$file.$version.php";
+		$infile = self::getPathForVersion($file, $version);
 		if (!file_exists($infile)) {
 			throw new Exception("Config file not found ($file:$version)");
 		}
@@ -79,7 +79,7 @@ class EncryptedConfig {
 	 */
 	static function decrypt($file, $version = null) {
 		$data = self::load($file, $version);
-		$outfile = self::SavePath . basename($file) . ".$version" . self::Suffix;
+		$outfile = self::getPlaintextPathForVersion($file, $version);
 		if (file_put_contents($outfile, '<?php return ' . var_export($data, true) . ';') !== false) {
 			return $outfile;
 		}
@@ -96,7 +96,7 @@ class EncryptedConfig {
 	 */
 	static function encrypt($file, $version) {
 		self::setup();
-		$infile = self::SavePath . basename($file) . ".$version" . self::Suffix;
+		$infile = self::getPlaintextPathForVersion($file, $version);
 		if (!file_exists($infile)) {
 			throw new Exception('Could not load raw config');
 		}
@@ -107,7 +107,7 @@ class EncryptedConfig {
 		$data = serialize($raw);
 		$encrypted = Encryption::encrypt($data, $key);
 
-		$outfile = self::SavePath . basename($file) . ".$version.php";
+		$outfile = self::getPathForVersion($file, $version);
 		if (file_put_contents($outfile, $encrypted) === false) {
 			return false;
 		}
@@ -127,19 +127,40 @@ class EncryptedConfig {
 		return (bool) file_put_contents(self::ConfigPath, '<?php return ' . var_export(self::$configs, true) . ';');
 	}
 
-	public static function prepNextVersion($file, $author) {
+	public static function getPathForVersion($file, $version) {
+		return self::SavePath . basename($file) . ".$version.php";
+	}
+
+	public static function getPlaintextPathForVersion($file, $version) {
+		return self::SavePath . basename($file) . ".$version" . self::Suffix;
+	}
+
+	private static function getNextVersion($file) {
 		self::setup();
 		if (!isset(self::$configs[$file])) {
-			$maxVersion = 1;
+			return 1;
 		}
 		else {
-			$maxVersion = max(array_keys(self::$configs[$file]['versions'])) + 1;
+			return max(array_keys(self::$configs[$file]['versions'])) + 1;
 		}
-		self::$configs[$file]['versions'][$maxVersion] = array(
+		
+	}
+
+	public static function prepNextVersion($file, $author) {
+		self::setup();
+		$file = basename($file);
+		$nextVersion = self::getNextVersion($file);
+		self::$configs[$file]['versions'][$nextVersion] = array(
 			'author' => $author,
 			'update' => date('c')
 		);
-		return self::writeConfigs();
+		return self::writeConfigs() ?  $nextVersion : false;
 	}
+
+	public static function setActiveVersion($file, $version) {
+		$file = basename($file);
+		self::$configs[$file]['active'] = $version;
+		return self::writeConfigs();
+	} // function setActiveVersion
 
 }
