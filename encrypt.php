@@ -127,7 +127,7 @@ class EncryptedData {
 		return (bool) file_put_contents(self::ConfigPath, '<?php return ' . var_export(self::$configs, true) . ';');
 	}
 
-	public static function getPathForVersion($file, $version) {
+	private static function getPathForVersion($file, $version) {
 		return self::SavePath . basename($file) . ".$version.php";
 	}
 
@@ -135,7 +135,7 @@ class EncryptedData {
 		return self::SavePath . basename($file) . ".$version" . self::Suffix;
 	}
 
-	private static function getNextVersion($file) {
+	public static function getNextVersion($file) {
 		self::setup();
 		if (!isset(self::$configs[$file])) {
 			return 1;
@@ -147,6 +147,9 @@ class EncryptedData {
 	}
 
 	public static function prepNextVersion($file, $author) {
+		if (!$author) {
+			throw new BadMethodCallException("File Author is required");
+		}
 		self::setup();
 		$file = basename($file);
 		$nextVersion = self::getNextVersion($file);
@@ -162,5 +165,24 @@ class EncryptedData {
 		self::$configs[$file]['active'] = $version;
 		return self::writeConfigs();
 	} // function setActiveVersion
+
+	public static function rotate($file, $author, $bump, $oldVersion) {
+		$newVersion = self::prepNextVersion($file, $author);
+		// Fixme: this should not need to write decrypted data to disk to bump version
+		$oldPath = self::decrypt($file, $oldVersion);
+		$newPath = self::getPlaintextPathForVersion($file, $newVersion);
+		if (!rename($oldPath, $newPath)) {
+			unlink($oldPath);
+			unlink($newPath);
+			return false;
+		}
+		if (!self::encrypt($file, $newVersion)) {
+			return false;
+		}
+		if ($bump) {
+			EncryptedData::setActiveVersion($file, $newVersion);
+		}
+		return $newVersion;
+	}
 
 }
