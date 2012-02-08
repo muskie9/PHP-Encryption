@@ -59,6 +59,15 @@ class EncryptedData {
 	}
 
 	/**
+	 * Write current version to "active" version in config
+	 * @return boolean
+	 */
+	public function activate() {
+		self::$configs[$this->file]['active'] = $this->version;
+		return self::writeConfigs();
+	}
+
+	/**
 	 * Decrypt contents of file with key generated using instance details
 	 * @return mixed      Decrypted data on success
 	 * @throws \Exception On decryption failure
@@ -91,17 +100,6 @@ class EncryptedData {
 	}
 
 	/**
-	 * @param  string     $author Name of person performing rotation
-	 * @return boolean
-	 * @throws \Exception
-	 */
-	public function rotate($author) {
-		$data = $this->getData();
-		$this->prepNextVersion($author);
-		return $this->write($data);
-	}
-
-	/**
 	 * Set up next version of encrypted file
 	 * @param  string $author Name of person creating next version
 	 * @return int            Next version number on success
@@ -118,6 +116,17 @@ class EncryptedData {
 		);
 		$this->version = $nextVersion;
 		return self::writeConfigs() ?  $nextVersion : false;
+	}
+
+	/**
+	 * @param  string     $author Name of person performing rotation
+	 * @return boolean
+	 * @throws \Exception
+	 */
+	public function rotate($author) {
+		$data = $this->getData();
+		$this->prepNextVersion($author);
+		return $this->write($data);
 	}
 
 	/**
@@ -145,22 +154,23 @@ class EncryptedData {
 	}
 
 	/**
-	 * Write current version to "active" version in config
-	 * @return boolean
-	 */
-	public function makeActive() {
-		self::$configs[$this->file]['active'] = $this->version;
-		return self::writeConfigs();
-	}
-
-	
-	/**
 	 * @param  string $file    File name
 	 * @param  int    $version File version
 	 * @return string          Encryption key
 	 */
 	private static function buildEncryptionKey($file, $version) {
 		return call_user_func(self::$algorithm, self::$configs[$file]['versions'][$version], $file, $version);
+	}
+
+	/**
+	 * @param  string $file Name of file
+	 * @return int          Active version number (0 if no active version)
+	 */
+	private static function getActiveVersion($file) {
+		if (isset(self::$configs[$file]['active'])) {
+			return self::$configs[$file]['active'];
+		}
+		return 0;
 	}
 
 	/**
@@ -178,17 +188,6 @@ class EncryptedData {
 	private static function writeConfigs() {
 		// do not call setup or you will overwrite your local changes!
 		return (bool) file_put_contents(self::$configPath, '<?php return ' . var_export(self::$configs, true) . ';');
-	}
-
-	/**
-	 * @param  string $file Name of file
-	 * @return int          Active version number (0 if no active version)
-	 */
-	private static function getActiveVersion($file) {
-		if (isset(self::$configs[$file]['active'])) {
-			return self::$configs[$file]['active'];
-		}
-		return 0;
 	}
 
 }
