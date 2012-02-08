@@ -20,7 +20,7 @@ class Activate_Tests extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($v1data, $default->getData(), 'Data should match v1');
 		unset($default);
 
-		$ed->rotate(__CLASS__);
+		$ed->prepNextVersion(__CLASS__);
 		$ed->write($v2data);
 
 		$default = new WePay\EncryptedData($file);
