@@ -72,8 +72,8 @@ class EncryptedData {
 		if (!$version) {
 			$version = self::getActiveVersion($file);
 		}
-		$this->file = $file;
-		$this->version = strtolower($version);
+		$this->file = strtolower($file);
+		$this->version = $version;
 	}
 
 	/**
