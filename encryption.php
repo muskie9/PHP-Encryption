@@ -19,7 +19,9 @@ function decrypt($data, $key) {
 
 function encrypt($plaintext, $key) {
 	if (!$iv = mcrypt_create_iv(IvLen, Entropy)) {
+		// @codeCoverageIgnoreStart No practical way to simulate IV setup failure
 		throw new Exception('Could not create initialization vector');
+		// @codeCoverageIgnoreEnd
 	}
 	$encrypted = mcrypt_encrypt(Cipher, $key, $plaintext, Mode, $iv);
 	return base64_encode($iv.$encrypted);
