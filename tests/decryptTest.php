@@ -64,4 +64,15 @@ class Decrypt_Tests extends PHPUnit_Framework_TestCase {
 		$this->fail('Reading bogus data did not throw an exception');
 	}
 
+	public function testDecryptingUnversionedFileFails() {
+		$ed = new WePay\EncryptedData(__FUNCTION__);
+		try {
+			$ed->getData();
+		}
+		catch (Exception $e) {
+			return;
+		}
+		$this->fail('Reading nonexistent data did not throw an exception');
+	}
+
 }
