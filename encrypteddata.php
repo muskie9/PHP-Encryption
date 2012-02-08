@@ -3,7 +3,7 @@
 namespace WePay;
 use Exception;
 
-require_once './encryption.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'encryption.php';
 
 class EncryptedData {
 
