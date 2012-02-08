@@ -62,6 +62,13 @@ class EncryptedData {
 		self::$isSetUp = true;
 	}
 
+	public static function prepInitialVersion($fileName, $data, $author) {
+		$ED = new self($fileName);
+		$ED->prepNextVersion($author);
+		$ED->write($data);
+		return $ED;
+	}
+
 	/**
 	 * Wrapper object for reading/writing versioned, encrypted files
 	 * @param string $file     Name of versioned file
@@ -96,6 +103,14 @@ class EncryptedData {
 			throw new Exception('No version specified');
 		}
 		return $this->read(self::getPathForVersion($this->file, $this->version));
+	}
+
+	public function getPath() {
+		return self::getPathForVersion($this->file, $this->version);
+	}
+
+	public function getVersion() {
+		return $this->version;
 	}
 
 	/**
@@ -140,7 +155,12 @@ class EncryptedData {
 		$data = file_get_contents($infile);
 		$key  = self::buildEncryptionKey($this->file, $this->version);
 		$decrypted = decrypt($data, $key);
-		if ($parsed = @unserialize($decrypted)) {
+		$parsed = @unserialize($decrypted);
+		if ($parsed !== false) {
+			return $parsed;
+		}
+		// Special handling for actually storing false
+		if ($decrypted === 'b:0;') {
 			return $parsed;
 		}
 		throw new Exception('Could not decode data');
@@ -171,7 +191,8 @@ class EncryptedData {
 		}
 		try {
 			$testData = $this->read($outfile);
-			if ($testData === $data) {
+			// we can't use === because encoded objects will not point to same reference on unserialize from read
+			if ($testData == $data && gettype($data) == gettype($testData)) {
 				return true;
 			}
 			// bad data will be deleted below

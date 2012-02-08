@@ -1,0 +1,12 @@
+<phpunit
+	bootstrap='./bootstrap.php'
+	>
+	<filter>
+		<blacklist>
+			<directory>.</directory>
+		</blacklist>
+	</filter>
+	<logging>
+		<log type="coverage-html" target="./coverage" />
+	</logging>
+</phpunit>
