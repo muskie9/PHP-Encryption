@@ -20,14 +20,17 @@ class EncryptedData {
 	 * Library setup to override defaults
 	 * Does not need to be called if using default paths
 	 * Absolute paths are highly recommended
-	 * @param string $configPath    Path to file which returns configuration array
-	 * @param string $algorithmPath Path to file which returns keygen closure
-	 * @param string $filePath      Path to directory in which encrypted files are stored
+	 * @param string  $configPath    Path to file which returns configuration array
+	 * @param string  $algorithmPath Path to file which returns keygen closure
+	 * @param string  $filePath      Path to directory in which encrypted files are stored
+	 * @param closure $algorithm     Keygen closure
 	 */
-	public static function setup($configPath = null, $algorithmPath = null, $filePath = null) {
-		if (self::$isSetUp && !func_get_args()) {
+	public static function setup(array $options = array()) {
+		if (self::$isSetUp && !$options) {
 			return;
 		}
+		$configPath = $algorithm = $algorithmPath = $filePath = null;
+		extract($options);
 
 		if ($configPath) {
 			self::$configPath = $configPath;
@@ -38,7 +41,10 @@ class EncryptedData {
 			self::$configs    = include self::$configPath;
 		}
 
-		if ($algorithmPath) {
+		if ($algorithm) {
+			self::$algorithm = $algorithm;
+		}
+		elseif ($algorithmPath) {
 			self::$algorithm = include $algorithmPath;
 		}
 		elseif (!self::$isSetUp) {
@@ -53,7 +59,7 @@ class EncryptedData {
 			self::$filePath = __DIR__ . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR;
 		}
 
-		self::$isSetUp   = true;
+		self::$isSetUp = true;
 	}
 
 	/**
