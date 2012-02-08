@@ -69,10 +69,11 @@ class EncryptedData {
 	 */
 	public function __construct($file, $version = 0) {
 		self::setup();
+		$file = strtolower($file);
 		if (!$version) {
 			$version = self::getActiveVersion($file);
 		}
-		$this->file = strtolower($file);
+		$this->file = $file;
 		$this->version = $version;
 	}
 
