@@ -68,22 +68,15 @@ class EncryptedData {
 	}
 
 	/**
-	 * Decrypt contents of file with key generated using instance details
+	 * Get decrypted data of instance
 	 * @return mixed      Decrypted data on success
-	 * @throws \Exception On decryption failure
+	 * @throws \Exception On decryption failure or missing version
 	 */
 	public function getData() {
 		if (!$this->version) {
 			throw new Exception('No version specified');
 		}
-		$infile = self::getPathForVersion($this->file, $this->version);
-		$data = file_get_contents($infile);
-		$key  = self::buildEncryptionKey($this->file, $this->version);
-		$decrypted = Encryption::decrypt($data, $key);
-		if ($parsed = @unserialize($decrypted)) {
-			return $parsed;
-		}
-		throw new Exception('Could not decode data');
+		return $this->read(self::getPathForVersion($this->file, $this->version));
 	}
 
 	/**
@@ -116,6 +109,22 @@ class EncryptedData {
 		);
 		$this->version = $nextVersion;
 		return self::writeConfigs() ?  $nextVersion : false;
+	}
+
+	/**
+	 * Decrypt contents of file using key generated with instance data
+	 * @param  string      $infile Path to file containing encrupted data
+	 * @return mixed
+	 * @throws \Exception          On decryption failure
+	 */
+	private function read($infile) {
+		$data = file_get_contents($infile);
+		$key  = self::buildEncryptionKey($this->file, $this->version);
+		$decrypted = Encryption::decrypt($data, $key);
+		if ($parsed = @unserialize($decrypted)) {
+			return $parsed;
+		}
+		throw new Exception('Could not decode data');
 	}
 
 	/**
