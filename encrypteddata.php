@@ -120,7 +120,7 @@ class EncryptedData {
 	private function read($infile) {
 		$data = file_get_contents($infile);
 		$key  = self::buildEncryptionKey($this->file, $this->version);
-		$decrypted = Encryption::decrypt($data, $key);
+		$decrypted = decrypt($data, $key);
 		if ($parsed = @unserialize($decrypted)) {
 			return $parsed;
 		}
@@ -146,7 +146,7 @@ class EncryptedData {
 	public function write($data) {
 		$key = self::buildEncryptionKey($this->file, $this->version);
 		$outfile = self::getPathForVersion($this->file, $this->version);
-		$encrypted = Encryption::encrypt(serialize($data), $key);
+		$encrypted = encrypt(serialize($data), $key);
 		if (false === file_put_contents($outfile, $encrypted)) {
 			return false;
 		}
