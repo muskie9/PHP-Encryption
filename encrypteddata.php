@@ -25,22 +25,34 @@ class EncryptedData {
 	 * @param string $filePath      Path to directory in which encrypted files are stored
 	 */
 	public static function setup($configPath = null, $algorithmPath = null, $filePath = null) {
-		if (self::$isSetUp) {
+		if (self::$isSetUp && !func_get_args()) {
 			return;
 		}
-		if (!$configPath) {
+
+		if ($configPath) {
+			self::$configPath = $configPath;
+			self::$configs    = include self::$configPath;
+		}
+		elseif (!self::$isSetUp) {
 			self::$configPath = __DIR__ . DIRECTORY_SEPARATOR . 'files.php';
-		}
-		if (!$algorithmPath) {
-			$algorithmPath = __DIR__ . DIRECTORY_SEPARATOR . 'algorithm.php';
-		}
-		if (!$filePath) {
-			$filePath = __DIR__ . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR;
+			self::$configs    = include self::$configPath;
 		}
 
-		self::$algorithm = include $algorithmPath;
-		self::$configs   = include self::$configPath;
-		self::$filePath  = $filePath;
+		if ($algorithmPath) {
+			self::$algorithm = include $algorithmPath;
+		}
+		elseif (!self::$isSetUp) {
+			$algorithmPath = __DIR__ . DIRECTORY_SEPARATOR . 'algorithm.php';
+			self::$algorithm = include $algorithmPath;
+		}
+
+		if ($filePath) {
+			self::$filePath = $filePath;
+		}
+		elseif (!self::$isSetUp) {
+			self::$filePath = __DIR__ . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR;
+		}
+
 		self::$isSetUp   = true;
 	}
 
