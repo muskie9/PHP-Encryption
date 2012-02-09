@@ -25,6 +25,8 @@ class EncryptedData {
 	 * @param string  $filePath      Path to directory in which encrypted files are stored
 	 * @param closure $algorithm     Keygen closure
 	 */
+	// @codeCoverageIgnoreStart We don't care about setup, there's no real
+	// logic and none of it makes sense to test anyway
 	public static function setup(array $options = array()) {
 		if (self::$isSetUp && !$options) {
 			return;
@@ -61,6 +63,7 @@ class EncryptedData {
 
 		self::$isSetUp = true;
 	}
+	// @codeCoverageIgnoreEnd
 
 	public static function prepInitialVersion($fileName, $data, $author) {
 		$ED = new self($fileName);
