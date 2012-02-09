@@ -102,9 +102,6 @@ class EncryptedData {
 	 * @throws \Exception On decryption failure or missing version
 	 */
 	public function getData() {
-		if (!$this->version) {
-			throw new Exception('No version specified');
-		}
 		return $this->read(self::getPathForVersion($this->file, $this->version));
 	}
 
@@ -155,8 +152,8 @@ class EncryptedData {
 	 * @throws \Exception          On decryption failure
 	 */
 	private function read($infile) {
-		$data = file_get_contents($infile);
 		$key  = self::buildEncryptionKey($this->file, $this->version);
+		$data = file_get_contents($infile);
 		$decrypted = decrypt($data, $key);
 		$parsed = @unserialize($decrypted);
 		if ($parsed !== false) {
@@ -206,11 +203,15 @@ class EncryptedData {
 	}
 
 	/**
-	 * @param  string $file    File name
-	 * @param  int    $version File version
-	 * @return string          Encryption key
+	 * @param  string     $file    File name
+	 * @param  int        $version File version
+	 * @return string              Encryption key
+	 * @throws \Exception          If config not found for file or version
 	 */
 	private static function buildEncryptionKey($file, $version) {
+		if (!isset(self::$configs[$file]['versions'][$version])) {
+			throw new Exception("Settings not found for file '$file' (v$version)");
+		}
 		return call_user_func(self::$algorithm, self::$configs[$file]['versions'][$version], $file, $version);
 	}
 
