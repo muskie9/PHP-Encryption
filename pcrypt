@@ -1,11 +1,11 @@
 #!/usr/bin/php
 <?php
 set_error_handler(function($a,$b,$c,$d){throw new ErrorException($b,0,$a,$c,$d);}, -1);
-set_exception_handler(function(Exception $e) { usage($e->getMessage()); });
+set_exception_handler(function(Exception $e) { usage($e->getMessage().$e->getTraceAsString()); });
 require './encrypteddata.php';
 // Note: I just filed PHP bug #60997 for funky getopt optional argument handling. As a result, 'a' and 'v' must be treated as required, and if you omit a value when running this script they are parsed oddly. It was that or having "-a 'Author name'" not work right (it would have to be passed as "-a'Author name'")
-$opt = getopt('a:hv:', array('help', 'infile:', 'outfile:', 'rotate', 'encrypt', 'decrypt', 'keep'));
-$file = end($_SERVER['argv']);
+$opt = getopt('a:hv:', array('help', 'infile:', 'outfile:', 'rotate:', 'encrypt:', 'decrypt:', 'keep'));
+
 $version = isset($opt['v'])       ? $opt['v']       : 0;
 $author  = isset($opt['a'])       ? $opt['a']       : '';
 $infile  = isset($opt['infile'])  ? $opt['infile']  : '';
@@ -15,28 +15,65 @@ if (isset($opt['h']) || isset($opt['help'])) {
 	usage();
 }
 elseif (isset($opt['rotate'])) {
-	rotate($file, $author, $version, $keep);
+	rotate($opt['rotate'], $author, $version, $keep);
 }
-elseif (isset($opt['encryt'])) {
-	encrypt($file, $author, $version);
+elseif (isset($opt['encrypt'])) {
+	encrypt($opt['encrypt'], $author, $version, $infile, $keep);
 }
 elseif (isset($opt['decrypt'])) {
-	decrypt($file, $version, $outfile);
+	decrypt($opt['decrypt'], $version, $outfile);
 }
 else {
 	usage("Mode not specified");
 }
 
-// output text with MUD-style colorization syntax (coming soon...)
-function e($text) {
-	echo $text, "\n";
-}
-
 function decrypt($file, $version, $outfile) {
-	print_r(func_get_args());
+	$msg = '';
+	$ED = new WePay\EncryptedData($file, $version);
+	$export = '<?php return ';
+	$data = $ED->getData();
+	$export .= var_export($data, true);
+	$export .= ";\n";
+	if ($outfile) {
+		if (false !== file_put_contents($outfile, $export)) {
+			echo "Data written to $outfile\n";
+			exit(0);
+		}
+		else {
+			echo "Error writing to $outfile\n";
+			exit(1);
+		}
+	}
+	else {
+		echo $export, "\n";
+	}
+
 }
-function encrypt($file, $author, $version, $infile) {
-	print_r(func_get_args());
+function encrypt($file, $author, $version, $infile, $keepOriginalActive) {
+	if (!is_readable($infile)) {
+		echo "File '$infile' cannot be read.\n";
+		exit(1);
+	}
+	$ED = new WePay\EncryptedData($file, $version);
+	if (!$version) {
+		$ED->prepNextVersion($author);
+		$version = $ED->getVersion();
+	}
+	$data = include $infile;
+	$ED->write($data);
+	$msg = "Data written to version $version";
+	if (!$keepOriginalActive) {
+		$ED->activate();
+		$msg .= " and made active.";
+	}
+	else {
+		$msg .= " but kept original active.";
+	}
+	if (unlink($infile)) {
+		$msg .= "  Plaintext version deleted.";
+	}
+	echo $msg, "\n";
+	exit(0);
 }
 function rotate($file, $author, $oldVersion, $keepOriginalActive) {
 	$msg = '';
@@ -50,11 +87,11 @@ function rotate($file, $author, $oldVersion, $keepOriginalActive) {
 		else {
 			$msg .= " but kept original version active.";
 		}
-		e($msg);
+		echo $msg, "\n";
 		exit(0);
 	}
 	else {
-		e("Rotation failed.");
+		echo "Rotation failed.\n";
 		exit(1);
 	}
 }
@@ -76,13 +113,13 @@ Modes:
 Options:
     -h, --help                Display this help screen and exit
     -v            <number>    Modify file at version number
-    -a            <author>    Specify name of author (required for write operations)
-    --infile      <path>      Path to plaintext input file
-    --outfile     <path>      Path to plaintext output file
+    -a            <author>    Specify name of author (--encrypt, --rotate)
+    --infile      <path>      Path to plaintext input file (--encrypt)
+    --outfile     <path>      Path to plaintext output file (--decrypt)
+    --keep                    Do not activate new version (--encrypt, --rotate)
     --configPath  <path>      Path to configuration array
     --algorithm   <path>      Path to PHP file returning keygen closure
     --dataPath    <path>      Path to directory containing encrypted files
-    --keep                    Do not activate new version (for --rotate only)
 
 USAGE;
 	exit($msg ? 1 : 0);
