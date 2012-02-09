@@ -21,7 +21,7 @@ elseif (isset($opt['encryt'])) {
 	encrypt($file, $author, $version);
 }
 elseif (isset($opt['decrypt'])) {
-	decrypt($file, $same, $version);
+	decrypt($file, $version, $outfile);
 }
 else {
 	usage("Mode not specified");
@@ -40,7 +40,7 @@ function encrypt($file, $author, $version, $infile) {
 }
 function rotate($file, $author, $oldVersion, $keepOriginalActive) {
 	$msg = '';
-	$ED = new WePay\EncryptedData($file);
+	$ED = new WePay\EncryptedData($file, $oldVersion);
 	if ($ED->rotate($author)) {
 		$msg .= "Rotated to version " . $ED->getVersion();
 		if (!$keepOriginalActive) {
