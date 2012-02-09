@@ -38,7 +38,7 @@ It should look like this:
 		return $encryptionKey;
 	};
 
-`$config` is an array containing two keys: `'author'` and `'update'` (ISO8601 date string)
+`$config` is an array containing two keys: `'author'` and `'update'` (ISO8601 date string)  
 `$file` is the name of the config file being loaded  
 `$version` is the version number  
 
