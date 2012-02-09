@@ -96,7 +96,7 @@ returns `boolean`
 #### \WePay\EncryptedData->getData()
 Fetch and decrypt the original data
 
-returns `mixed` 
+returns `mixed`  
 throws `\Exception` on failure
 
 #### \WePay\EncryptedData->getPath()
