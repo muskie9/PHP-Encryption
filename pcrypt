@@ -1,0 +1,89 @@
+#!/usr/bin/php
+<?php
+set_error_handler(function($a,$b,$c,$d){throw new ErrorException($b,0,$a,$c,$d);}, -1);
+set_exception_handler(function(Exception $e) { usage($e->getMessage()); });
+require './encrypteddata.php';
+// Note: I just filed PHP bug #60997 for funky getopt optional argument handling. As a result, 'a' and 'v' must be treated as required, and if you omit a value when running this script they are parsed oddly. It was that or having "-a 'Author name'" not work right (it would have to be passed as "-a'Author name'")
+$opt = getopt('a:hv:', array('help', 'infile:', 'outfile:', 'rotate', 'encrypt', 'decrypt', 'keep'));
+$file = end($_SERVER['argv']);
+$version = isset($opt['v'])       ? $opt['v']       : 0;
+$author  = isset($opt['a'])       ? $opt['a']       : '';
+$infile  = isset($opt['infile'])  ? $opt['infile']  : '';
+$outfile = isset($opt['outfile']) ? $opt['outfile'] : '';
+$keep    = isset($opt['keep']);
+if (isset($opt['h']) || isset($opt['help'])) {
+	usage();
+}
+elseif (isset($opt['rotate'])) {
+	rotate($file, $author, $version, $keep);
+}
+elseif (isset($opt['encryt'])) {
+	encrypt($file, $author, $version);
+}
+elseif (isset($opt['decrypt'])) {
+	decrypt($file, $same, $version);
+}
+else {
+	usage("Mode not specified");
+}
+
+// output text with MUD-style colorization syntax (coming soon...)
+function e($text) {
+	echo $text, "\n";
+}
+
+function decrypt($file, $version, $outfile) {
+	print_r(func_get_args());
+}
+function encrypt($file, $author, $version, $infile) {
+	print_r(func_get_args());
+}
+function rotate($file, $author, $oldVersion, $keepOriginalActive) {
+	$msg = '';
+	$ED = new WePay\EncryptedData($file);
+	if ($ED->rotate($author)) {
+		$msg .= "Rotated to version " . $ED->getVersion();
+		if (!$keepOriginalActive) {
+			$ED->activate();
+			$msg .= " and made active.";
+		}
+		else {
+			$msg .= " but kept original version active.";
+		}
+		e($msg);
+		exit(0);
+	}
+	else {
+		e("Rotation failed.");
+		exit(1);
+	}
+}
+function usage($msg = '') {
+	if ($msg) {
+		echo $msg, "\n\n";
+	}
+
+	echo <<<USAGE
+Usage: 
+    pcrypt --mode [options] [file]
+    pcrypt -h
+
+Modes:
+    --rotate    Rotate: re-encrypt file with new version number
+    --encrypt   Encrypt: read plaintext file and write encrypted for execution
+    --decrypt   Decrypt: read encrypted file and write plaintext for editing
+
+Options:
+    -h, --help                Display this help screen and exit
+    -v            <number>    Modify file at version number
+    -a            <author>    Specify name of author (required for write operations)
+    --infile      <path>      Path to plaintext input file
+    --outfile     <path>      Path to plaintext output file
+    --configPath  <path>      Path to configuration array
+    --algorithm   <path>      Path to PHP file returning keygen closure
+    --dataPath    <path>      Path to directory containing encrypted files
+    --keep                    Do not activate new version (for --rotate only)
+
+USAGE;
+	exit($msg ? 1 : 0);
+}
