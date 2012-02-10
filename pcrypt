@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 set_error_handler(function($a,$b,$c,$d){throw new ErrorException($b,0,$a,$c,$d);}, -1);
-set_exception_handler(function(Exception $e) { usage($e->getMessage().$e->getTraceAsString()); });
+set_exception_handler(function(Exception $e) { usage($e->getMessage()); });
 require './encrypteddata.php';
 // Note: I just filed PHP bug #60997 for funky getopt optional argument handling. As a result, 'a' and 'v' must be treated as required, and if you omit a value when running this script they are parsed oddly. It was that or having "-a 'Author name'" not work right (it would have to be passed as "-a'Author name'")
 $opt = getopt('a:hv:', array('help', 'infile:', 'outfile:', 'rotate:', 'encrypt:', 'decrypt:', 'keep'));
